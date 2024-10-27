@@ -1,122 +1,181 @@
-# Linux Home Backup Tool
+# 🍓 Raspberry Pi Backup and Restore Tool 🔄💾
 
-This project provides a simple backup and restore tool designed to back up data from multiple Raspberry Pis to a central NFS server. It is built using Python and offers an easy-to-use command-line interface (CLI).
+## 🌟 Overview
 
-## Features
+This tool helps you make copies of your Raspberry Pi files 📁, fix them if they break 🛠️, and keep them safe 🔄. It saves files over the network 🌐, uses zip 🗜️ to pack them up, and saves them at a set time ⏰. You can also change settings ⚙️, like where the files go and how long they are kept.
 
-- **Backup as a compressed ZIP archive**: The script creates a compressed ZIP archive of the specified source directory.
-- **NFS Support**: Data is backed up to a central server over NFS.
-- **Backup Rotation**: The script retains a maximum of 14 backups per device, with older backups being automatically deleted.
-- **Hostname-based Backup Directories**: Backups are stored in a directory that uses the hostname of each Raspberry Pi to easily distinguish backups from different devices.
-- **Configuration File**: A configuration file (`backup_config.json`) allows users to specify parameters such as the NFS server, target path, source directory, and backup retention time. This file can be edited either manually or via the configuration menu.
-- **User Menu for Interaction**: An interactive menu guides the user through creating new backups, restoring from existing backups, managing configuration, and deleting backups.
+## 🚀 What It Can Do
 
-## Requirements
+1. **🔄 Make a Backup**: Make a new copy of your important files 📁.
+2. **🛠️ Fix Files**: Get your files back if something goes wrong.
+3. **⚙️ Change Settings**: Change things like where the files are saved 🌐, and how long to keep them ⏳.
+4. **⏰ Automatic Backups**: Make backups every day at the same time 🕒.
+5. **🗑️ Manage Backups**: Delete old copies 🗑️ to save space.
 
-1. **Python 3**: This script is written in Python 3 and uses Python standard libraries.
-2. **Virtual Environment**: It is recommended to run the script within a virtual environment.
-3. **NFS Support**: Make sure `nfs-common` is installed on your Raspberry Pi.
+## 📋 What You Need
 
-### Install `nfs-common`
+- **🐍 Python 3**: This tool uses Python 3.
+- **📊 `tqdm`**: This shows progress while making or fixing a backup.
+- **🗜️ `zipfile`**: This helps pack up the files.
+- **🔑 `sudo` Access**: You need `sudo` to run some commands.
+- **🌐 NFS Share**: A place on the network to save files.
 
-To install the required package, run:
+📦 To get the things you need, run this:
 
-```sh
-sudo apt-get update
-sudo apt-get install nfs-common
+```bash
+sudo apt install nfs-common python python-venv
 ```
 
-## Setup
+## ⚙️ How to Set It Up
 
-1. **Clone the Repository**
-
-   Clone the Git repository to your Raspberry Pi:
-
-   ```sh
+1. **📂 Get the Files**:
+   ```bash
    git clone https://github.com/Madchristian/linux_home_backuptool.git
+   ```
+2. **📁 Go to the Folder**:
+   ```bash
    cd linux_home_backuptool
    ```
-
-2. **Create a Virtual Environment**
-
-   Create and activate a virtual environment:
-
-   ```sh
+3. **🐍 Set Up a Virtual Environment**:
+   ```bash
    python3 -m venv venv
    source venv/bin/activate
    ```
-
-3. **Install Dependencies**
-
-   Install the required packages from `requirements.txt`:
-
-   ```sh
+4. **📦 Install What You Need**:
+   ```bash
    pip install -r requirements.txt
    ```
 
-## Usage
+## ⚙️ How to Change Settings
 
-### Manually Run the Script
+The tool saves settings in a file called `backup_config.json`. This file is made the first time you run the tool. The settings include:
 
-Activate the virtual environment and run the script:
+- **🌐 NFS Server**: The address of your NFS server.
+- **📂 NFS Share**: The place on the server where files are saved.
+- **📁 Mount Point**: The folder where the NFS share is used.
+- **📁 Source Directory**: The folder to back up.
+- **⏳ Backup Retention**: How many copies to keep.
 
-```sh
-source venv/bin/activate
+## 🖥️ How to Use It
+
+### ▶️ Run the Tool
+
+To run the tool and see the menu:
+
+```bash
 python3 backup.py
 ```
 
-The script presents you with a menu of the following options:
+\
+*This is what the menu looks like*
 
-1. **Create New Backup**: Create a new backup of the specified directory.
-2. **Restore Backup**: Choose an available backup and restore it.
-3. **Edit Configuration**: Change settings such as NFS server, target directory, and retention.
-4. **Delete Backup**: Delete a specific backup or all backups of a device.
-5. **Exit**: Exit the program.
+From the menu, you can pick:
 
-### Automatic Backups via Cron Job
+1. **🔄 Make a New Backup**: Copy your files 📁.
+2. **🛠️ Restore a Backup**: Get back your files from a backup.
+3. **⚙️ Edit Settings**: Change things like where files are saved 🌐.
+4. **🗑️ Delete Backups**: Remove old backups.
+5. **⏰ Add a Cronjob**: Make backups every day.
+6. **🚪 Exit**: Stop the tool.
 
-To automate backups every day, set up a cron job:
+### 🔄 Make a New Backup
 
-```sh
-crontab -e
+Pick this to make a new backup. The tool will use the NFS share, pack up the files into a zip, and save them.
+
+### 🛠️ Restore a Backup
+
+Pick this to get back your files. The tool will show you the backups you have 🔄, and you can pick one to restore.
+
+### ⏰ Add a Cronjob
+
+This makes the tool run every day at 3 AM 🕒 to make backups.
+
+### 🗑️ Delete Backups
+
+You can delete one backup 🗑️ or all of them.
+
+### ⚙️ Edit Settings
+
+You can change things like the NFS server 🌐, NFS share 📂, and how many backups to keep ⏳. The tool will use the new settings next time.
+
+## ⏰ Cronjob Details
+
+The tool runs this command every day at 3 AM:
+
+```bash
+0 3 * * * /path/to/backup.py backup
 ```
 
-Add the following line to execute the backup daily at 3 AM:
+This command is added automatically if you choose it in the menu 📋.
 
-```sh
-0 3 * * * cd /path/to/linux_home_backuptool && source venv/bin/activate && /usr/bin/python3 backup.py backup --source /home/pi > /path/to/linux_home_backuptool/cronjob.log 2>&1
+## 📝 Logging
+
+The tool makes a log file (`backup_tool.log`) in the same folder. This log keeps track of what happens 🛠️, any errors ❌, and other messages 💬. The log file doesn’t get too big because it makes new ones when needed.
+
+## 🔒 Be Careful!
+
+- The tool uses `sudo` to mount and unmount the NFS share 🌐. Be careful, because `sudo` can make big changes to your system. Use it in a safe place.
+- Be careful with NFS permissions (`chmod 755` is used by default).
+- Don’t use permissions that are too open (`chmod 777`).
+
+## 🛠️ Fixing Problems
+
+### 🔑 Permission Problems
+
+Make sure you have the right permissions 👤.
+
+To check if you have `sudo` access:
+
+```bash
+sudo -v
 ```
 
-Replace `/path/to/linux_home_backuptool` with the actual path where you cloned the repository.
+If it doesn’t work, add yourself to the `sudoers` group:
 
-## Detailed Features
+```bash
+sudo usermod -aG sudo <your_username>
+```
 
-### 1. NFS Mount
-The script mounts an NFS share based on the settings in the configuration file (`backup_config.json`). The directory is mounted as `nfs_backup` within the current working directory. If the mount fails, an error is logged.
+### ⏰ Cronjob Not Running
 
-### 2. Backup Creation
-The script creates a ZIP archive of the specified source directory. The archive is stored in a directory that uses the hostname of the device, along with a timestamp to ensure uniqueness. Older backups are automatically deleted, keeping only the number specified in the configuration.
+To see if the cron service is running:
 
-### 3. Restoration
-During restoration, the user can select a specific backup based on the timestamp. The backup is extracted to the `~/restored_data` directory.
+```bash
+systemctl status cron
+```
 
-### 4. Configuration Management
-The menu allows the user to edit the program configuration without manually editing the configuration file. Parameters like NFS server, target directory, retention period, etc., can be adjusted easily.
+If it’s not running, start it:
 
-### 5. Deleting Backups
-Users can delete either a single backup or all backups of a particular device.
+```bash
+sudo systemctl start cron
+```
 
-## Log Files
-The script generates a log file (`backup_tool.log`) in the program directory that records all actions and errors. A maximum of 3 log files of size 5 MB each are retained.
+To see if your cron job is scheduled:
 
-## Notes
-- **NFS Access**: The script uses `sudo` to mount the NFS share, so appropriate permissions are required.
-- **Permission Management**: Ensure that the user running the script has enough permissions to access and write to the NFS share.
+```bash
+crontab -l
+```
 
-## Improvements
-If you have ideas for improvements or encounter any issues, feel free to create issues on the GitHub repository or submit pull requests.
+Make sure the cron service is turned on:
 
-## Author
-Created by Madchristian
+```bash
+sudo systemctl enable cron
+sudo systemctl start cron
+```
 
-Enjoy backing up your data! 😊
+### 🌐 NFS Share Problems
+
+Check the server address 🌐 and the NFS share 📂 to make sure everything is working.
+
+## 📜 License
+
+This tool is under the Apache 2.0 License 📄. See the `LICENSE` file for more details.
+
+## 🤝 Help Out
+
+You can copy the repository, send changes, or suggest new ideas ✨.
+
+---
+
+The text now uses simpler language to make it easier for young children to understand. 😊
+
