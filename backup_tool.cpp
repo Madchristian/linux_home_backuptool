@@ -14,7 +14,6 @@
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <unistd.h>
-// #include <tqdm.hpp>  // tqdm not available in C++ as standard, consider removing or replacing this functionality
 
 namespace fs = std::filesystem;
 
@@ -40,13 +39,9 @@ Config load_config() {
                    << "}";
         return default_config;
     }
-    std::ostringstream content;
-    content << config_file.rdbuf();
-    // Parsing JSON manually to keep it simple; you can use a library if needed.
-    Config config;
-    content.seekg(0);
     std::string line;
-    while (std::getline(content, line)) {
+    Config config;
+    while (std::getline(config_file, line)) {
         if (line.find("nfs_server") != std::string::npos)
             config.nfs_server = line.substr(line.find(':') + 3, line.rfind('"') - line.find(':') - 3);
         else if (line.find("nfs_share") != std::string::npos)
@@ -116,7 +111,6 @@ void create_backup(const Config& config) {
     size_t total_files = std::distance(fs::recursive_directory_iterator(config.source_directory), fs::recursive_directory_iterator{});
     std::cout << "Total files to process: " << total_files << std::endl;
     std::cout << "Progress: " << std::endl;
-    // Implementing simple progress bar for indication
 
     for (const auto& entry : fs::recursive_directory_iterator(config.source_directory)) {
         if (entry.is_regular_file()) {
@@ -127,7 +121,7 @@ void create_backup(const Config& config) {
                 continue;
             }
             zip_file_add(zip, relative_path.c_str(), source, ZIP_FL_ENC_UTF_8);
-            std::cout << '.'; std::cout.flush();  // Simple progress indication
+            std::cout << '.'; std::cout.flush();
         }
     }
     zip_close(zip);
@@ -175,7 +169,6 @@ void restore_backup(const Config& config) {
     }
 
     size_t num_files = zip_get_num_entries(zip, 0);
-    // Progress bar setup removed due to lack of standard C++ tqdm support
 
     for (size_t i = 0; i < num_files; ++i) {
         const char* name = zip_get_name(zip, i, 0);
@@ -193,7 +186,6 @@ void restore_backup(const Config& config) {
             out.write(buffer, bytes_read);
         }
         zip_fclose(file);
-        // bar.update(); - Progress bar update removed
     }
     zip_close(zip);
     std::cout << "Successfully restored from: " << restore_file << " to " << restore_target << std::endl;
