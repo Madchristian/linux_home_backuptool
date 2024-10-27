@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <string>
 #include <filesystem>
+#include <fstream>
+#include <yaml-cpp/yaml.h>
 
 namespace fs = std::filesystem;
 
@@ -22,8 +24,8 @@ void add_cronjob(const Config& config) {
 }
 
 int main() {
-    Config config = load_config();
-    mount_nfs_share(config);
+    Config config = Config::load_config();
+    nfs::mount_nfs_share(config);
     
     int choice;
     while (true) {
@@ -37,13 +39,13 @@ int main() {
         std::cout << "Choose an option: ";
         std::cin >> choice;
         if (choice == 1) {
-            create_backup(config);
+            filehandler::create_backup(config);
         } else if (choice == 2) {
-            restore_backup(config);
+            filehandler::restore_backup(config);
         } else if (choice == 3) {
-            edit_config(config);
+            config.edit_config();
         } else if (choice == 4) {
-            delete_backup(config);
+            filehandler::delete_backup(config);
         } else if (choice == 5) {
             add_cronjob(config);
         } else if (choice == 6) {
@@ -52,6 +54,6 @@ int main() {
             std::cerr << "Invalid selection." << std::endl;
         }
     }
-    unmount_nfs_share(config.mount_point);
+    nfs::unmount_nfs_share(config.mount_point);
     return 0;
 }
