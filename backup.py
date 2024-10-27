@@ -57,7 +57,7 @@ def backup(config):
             return
         
         hostname = socket.gethostname()
-        host_backup_directory = os.path.join(config['mount_point'], hostname)
+        host_backup_directory = os.path.join(config['mount_point'], 'rpi', hostname)
         if not os.path.exists(host_backup_directory):
             os.makedirs(host_backup_directory)
         
