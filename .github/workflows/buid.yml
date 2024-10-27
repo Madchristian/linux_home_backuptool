@@ -43,18 +43,22 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y g++ libzip-dev nfs-common
+    - name: Download compiled executable
+      uses: actions/download-artifact@v4
+      with:
+        name: backup_tool
 
-    - name: Compile C++ code
+    - name: Create a new tag
+      id: tag_version
       run: |
-        g++ -std=c++17 -o backup_tool backup_tool.cpp -lzip
+        TAG_VERSION="v1.0.${{ github.run_number }}"
+        git tag $TAG_VERSION
+        git push origin $TAG_VERSION
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
         files: backup_tool
+        tag_name: ${{ steps.tag_version.outputs.TAG_VERSION }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
