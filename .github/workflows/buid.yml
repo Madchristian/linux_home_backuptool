@@ -1,4 +1,4 @@
-name: Build and Test C++ Code
+name: Build, Test and Release C++ Code
 
 on:
   push:
@@ -25,6 +25,47 @@ jobs:
       run: |
         g++ -std=c++17 -o backup_tool backup_tool.cpp -lzip
 
-    - name: Run executable (optional)
+    - name: Upload compiled executable as artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: backup_tool
+        path: backup_tool
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
       run: |
-        ./backup_tool
+        sudo apt-get update
+        sudo apt-get install -y g++ libzip-dev nfs-common
+
+    - name: Compile C++ code
+      run: |
+        g++ -std=c++17 -o backup_tool backup_tool.cpp -lzip
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: 'v1.0.${{ github.run_number }}'
+        release_name: 'Backup Tool Release'
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./backup_tool
+        asset_name: backup_tool
+        asset_content_type: application/octet-stream
