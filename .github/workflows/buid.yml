@@ -2,11 +2,8 @@ name: Build, Test, and Release C++ Backup Tool
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    tags:
+      - "v*.*.*"
 
 permissions:
   contents: write  # Grant permissions to modify repository contents, including creating releases.
@@ -37,7 +34,7 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: startsWith(github.ref, 'refs/tags/')
 
     steps:
     - name: Checkout repository
