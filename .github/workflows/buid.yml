@@ -23,7 +23,7 @@ jobs:
 
     - name: Compile C++ code
       run: |
-        g++ -std=c++17 -o backup_tool backup_tool.cpp -lzip -ltqdm
+        g++ -std=c++17 -o backup_tool backup_tool.cpp -lzip
 
     - name: Run executable (optional)
       run: |
