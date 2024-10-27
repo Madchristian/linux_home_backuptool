@@ -9,14 +9,16 @@ import socket
 import zipfile
 import json
 
-# Logging configuration
 def setup_logging():
     log_directory = os.path.dirname(os.path.abspath(__file__))
     log_file = os.path.join(log_directory, 'backup_tool.log')
-    handler = RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=3)  # 5MB log files with rotation (3 backups)
+    handler = RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=3)
     logging.basicConfig(level=logging.INFO, handlers=[handler], format='%(asctime)s - %(levelname)s - %(message)s')
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+    logging.getLogger().addHandler(console_handler)
 
-# Load and save configuration
 def load_config():
     config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'backup_config.json')
     if not os.path.exists(config_path):
@@ -37,7 +39,6 @@ def save_config(config):
     with open(config_path, 'w') as config_file:
         json.dump(config, config_file, indent=4)
 
-
 def mount_nfs_share(nfs_server, nfs_share, mount_point):
     try:
         if not os.path.ismount(mount_point):
@@ -48,6 +49,13 @@ def mount_nfs_share(nfs_server, nfs_share, mount_point):
     except subprocess.CalledProcessError as e:
         logging.error(f"Error mounting NFS share: {e}")
 
+def unmount_nfs_share(mount_point):
+    try:
+        if os.path.ismount(mount_point):
+            subprocess.run(["sudo", "umount", mount_point], check=True)
+            logging.info(f"NFS share successfully unmounted from {mount_point}")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Error unmounting NFS share: {e}")
 
 def backup(config):
     try:
@@ -57,14 +65,13 @@ def backup(config):
             return
         
         hostname = socket.gethostname()
-        host_backup_directory = os.path.join(config['mount_point'], hostname)
+        host_backup_directory = os.path.join(config['mount_point'], 'rpi', hostname)
         if not os.path.exists(host_backup_directory):
             os.makedirs(host_backup_directory)
         
         date_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         backup_file = os.path.join(host_backup_directory, f'backup_{date_time}.zip')
         
-        # Create a compressed archive of the source directory
         with zipfile.ZipFile(backup_file, 'w', zipfile.ZIP_DEFLATED) as backup_zip:
             for root, dirs, files in os.walk(source_directory):
                 for file in files:
@@ -76,11 +83,10 @@ def backup(config):
     except Exception as e:
         logging.error(f"Error creating backup: {e}")
 
-
 def restore(config):
     try:
         hostname = socket.gethostname()
-        host_backup_directory = os.path.join(config['mount_point'], hostname)
+        host_backup_directory = os.path.join(config['mount_point'], 'rpi', hostname)
         backups = sorted([f for f in os.listdir(host_backup_directory) if f.startswith('backup_') and f.endswith('.zip')])
         if not backups:
             logging.error("No backups available for restoration.")
@@ -102,7 +108,6 @@ def restore(config):
                 if not os.path.exists(restore_target):
                     os.makedirs(restore_target)
                 
-                # Extract the archive to the target directory
                 with zipfile.ZipFile(restore_file, 'r') as backup_zip:
                     backup_zip.extractall(restore_target)
                 
@@ -114,7 +119,6 @@ def restore(config):
     except Exception as e:
         logging.error(f"Error during restoration: {e}")
 
-
 def manage_old_backups(directory, max_backups=14):
     try:
         backups = sorted([f for f in os.listdir(directory) if f.startswith('backup_') and f.endswith('.zip')])
@@ -125,14 +129,13 @@ def manage_old_backups(directory, max_backups=14):
     except Exception as e:
         logging.error(f"Error deleting old backups: {e}")
 
-
 def configure(config):
     print("\nConfiguration Menu")
     print(f"1: NFS Server (current: {config['nfs_server']})")
     print(f"2: NFS Share (current: {config['nfs_share']})")
     print(f"3: Mount Point (current: {config['mount_point']})")
     print(f"4: Source Directory (current: {config['source_directory']})")
-    print(f"5: Backup Retention in days (current: {config['backup_retention']})")
+    print(f"5: Backup Retention (current: {config['backup_retention']} days)")
     print("6: Back to main menu")
     choice = input("Please choose an option (1-6): ")
     if choice == '1':
@@ -145,7 +148,7 @@ def configure(config):
         config['source_directory'] = input("New Source Directory: ")
     elif choice == '5':
         try:
-            config['backup_retention'] = int(input("New Backup Retention (number of backups): "))
+            config['backup_retention'] = int(input("New Backup Retention (number of days): "))
         except ValueError:
             print("Invalid input. Please enter a number.")
     elif choice == '6':
@@ -153,9 +156,11 @@ def configure(config):
     else:
         print("Invalid selection.")
     save_config(config)
-
+    unmount_nfs_share(config['mount_point'])
+    mount_nfs_share(config['nfs_server'], config['nfs_share'], config['mount_point'])
 
 def display_menu(config):
+    mount_nfs_share(config['nfs_server'], config['nfs_share'], config['mount_point'])
     while True:
         print("\nBackup and Restore Tool")
         print("1: Create new backup")
@@ -173,16 +178,16 @@ def display_menu(config):
         elif choice == '4':
             delete_backup(config)
         elif choice == '5':
+            unmount_nfs_share(config['mount_point'])
             print("Program exited.")
             break
         else:
             print("Invalid selection. Please choose an option between 1 and 5.")
 
-
 def delete_backup(config):
     try:
         hostname = socket.gethostname()
-        host_backup_directory = os.path.join(config['mount_point'], hostname)
+        host_backup_directory = os.path.join(config['mount_point'], 'rpi', hostname)
         backups = sorted([f for f in os.listdir(host_backup_directory) if f.startswith('backup_') and f.endswith('.zip')])
         if not backups:
             print("No backups available to delete.")
@@ -213,13 +218,10 @@ def delete_backup(config):
     except Exception as e:
         logging.error(f"Error deleting backups: {e}")
 
-
 def main():
     setup_logging()
     config = load_config()
-    mount_nfs_share(config['nfs_server'], config['nfs_share'], config['mount_point'])
     display_menu(config)
-
 
 if __name__ == "__main__":
     main()
