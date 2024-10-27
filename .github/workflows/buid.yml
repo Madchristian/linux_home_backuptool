@@ -1,4 +1,4 @@
-name: Build, Test and Release C++ Code
+name: Build, Test, and Release C++ Code
 
 on:
   push:
@@ -7,6 +7,9 @@ on:
   pull_request:
     branches:
       - main
+
+permissions:
+  contents: write  # Grant permissions to modify repository contents, including creating releases.
 
 jobs:
   build:
@@ -38,7 +41,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Install dependencies
       run: |
@@ -50,22 +53,8 @@ jobs:
         g++ -std=c++17 -o backup_tool backup_tool.cpp -lzip
 
     - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
+      uses: softprops/action-gh-release@v2
+      with:
+        files: backup_tool
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: 'v1.0.${{ github.run_number }}'
-        release_name: 'Backup Tool Release'
-        draft: false
-        prerelease: false
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./backup_tool
-        asset_name: backup_tool
-        asset_content_type: application/octet-stream
