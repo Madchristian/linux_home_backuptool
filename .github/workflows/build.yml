@@ -23,7 +23,7 @@ jobs:
 
     - name: Compile C++ code
       run: |
-        g++ -std=c++17 -o backup_tool main.cpp config/config.cpp filehandler/filehandler.cpp nfs/nfs.cpp -lzip
+        g++ -std=c++17 -o backup_tool main.cpp config/config.cpp filehandler/filehandler.cpp nfs/nfs.cpp -Iconfig -Ifilehandler -Infs -lzip
 
     - name: Upload compiled executable as artifact
       uses: actions/upload-artifact@v4
