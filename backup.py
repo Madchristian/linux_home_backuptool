@@ -11,18 +11,22 @@ import json
 from tqdm import tqdm
 
 def setup_logging():
+    # Set up logging to both a rotating file and console for real-time monitoring.
     log_directory = os.path.dirname(os.path.abspath(__file__))
     log_file = os.path.join(log_directory, 'backup_tool.log')
     handler = RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=3)
     logging.basicConfig(level=logging.INFO, handlers=[handler], format='%(asctime)s - %(levelname)s - %(message)s')
+    # Console logging setup to show logs during script execution
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
     logging.getLogger().addHandler(console_handler)
 
 def load_config():
+    # Load configuration from JSON file or create a default one if it doesn't exist
     config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'backup_config.json')
     if not os.path.exists(config_path):
+        # Default configuration settings
         default_config = {
             "nfs_server": "10.0.30.20",
             "nfs_share": "/mnt/MainStorage/backups/rpi",
@@ -30,18 +34,22 @@ def load_config():
             "source_directory": "/home/pi",
             "backup_retention": 14
         }
+        # Save the default configuration to the JSON file
         with open(config_path, 'w') as config_file:
             json.dump(default_config, config_file, indent=4)
+    # Load the configuration from the file
     with open(config_path, 'r') as config_file:
         return json.load(config_file)
 
 def save_config(config):
+    # Save the current configuration to the JSON file
     config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'backup_config.json')
     with open(config_path, 'w') as config_file:
         json.dump(config, config_file, indent=4)
 
 def mount_nfs_share(nfs_server, nfs_share, mount_point):
     try:
+        # Check if the NFS share is already mounted, if not, mount it
         if not os.path.ismount(mount_point):
             os.makedirs(mount_point, exist_ok=True)
             subprocess.run(["sudo", "mount", "-o", "rw,nfsvers=4", f"{nfs_server}:{nfs_share}", mount_point], check=True)
@@ -52,6 +60,7 @@ def mount_nfs_share(nfs_server, nfs_share, mount_point):
 
 def unmount_nfs_share(mount_point):
     try:
+        # Unmount the NFS share if it is currently mounted
         if os.path.ismount(mount_point):
             subprocess.run(["sudo", "umount", mount_point], check=True)
             logging.info(f"NFS share successfully unmounted from {mount_point}")
@@ -60,48 +69,57 @@ def unmount_nfs_share(mount_point):
 
 def backup(config):
     try:
+        # Ensure the source directory exists before proceeding with backup
         source_directory = config['source_directory']
         if not os.path.exists(source_directory):
             logging.error(f"Error: Source directory {source_directory} does not exist.")
             return
         
+        # Determine the host-specific backup directory based on hostname
         hostname = socket.gethostname()
         host_backup_directory = os.path.join(config['mount_point'], 'rpi', hostname)
         if not os.path.exists(host_backup_directory):
             os.makedirs(host_backup_directory)
         
+        # Create a timestamped backup file
         date_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         backup_file = os.path.join(host_backup_directory, f'backup_{date_time}.zip')
         
+        # Create the backup zip file and add files from the source directory
         with zipfile.ZipFile(backup_file, 'w', zipfile.ZIP_DEFLATED) as backup_zip:
-            files = list(os.walk(source_directory))
-            total_files = sum(len(files_in_dir[2]) for files_in_dir in files)
+            total_files = sum(len(files) for _, _, files in os.walk(source_directory))
             with tqdm(total=total_files, desc="Backing up", unit="file", leave=True, dynamic_ncols=True) as pbar:
                 for root, dirs, files in os.walk(source_directory):
                     for file in files:
                         file_path = os.path.join(root, file)
-                        backup_zip.write(file_path, os.path.relpath(file_path, source_directory))
+                        arcname = os.path.relpath(file_path, source_directory)
+                        backup_zip.write(file_path, arcname)
                         pbar.update(1)
         
         logging.info(f"Backup successfully created: {backup_file}")
+        # Manage old backups to maintain the retention policy
         manage_old_backups(host_backup_directory, config['backup_retention'])
     except Exception as e:
         logging.error(f"Error creating backup: {e}")
 
 def restore(config):
     try:
+        # Determine the host-specific backup directory based on hostname
         hostname = socket.gethostname()
         host_backup_directory = os.path.join(config['mount_point'], 'rpi', hostname)
+        # List available backups for restoration
         backups = sorted([f for f in os.listdir(host_backup_directory) if f.startswith('backup_') and f.endswith('.zip')])
         if not backups:
             logging.error("No backups available for restoration.")
             return
         
+        # Display available backups to the user
         print("Available Backups:")
         for i, backup in enumerate(backups, 1):
             print(f"{i}: {backup}")
         print(f"{len(backups) + 1}: Back to main menu")
         
+        # Get user's choice for the backup to restore
         backup_choice = input("Please choose the backup to restore (number): ")
         if backup_choice == str(len(backups) + 1):
             return
@@ -113,6 +131,7 @@ def restore(config):
                 if not os.path.exists(restore_target):
                     os.makedirs(restore_target)
                 
+                # Extract the selected backup to the restore target directory
                 with zipfile.ZipFile(restore_file, 'r') as backup_zip:
                     files = backup_zip.namelist()
                     with tqdm(total=len(files), desc="Restoring", unit="file", leave=True, dynamic_ncols=True) as pbar:
@@ -130,6 +149,7 @@ def restore(config):
 
 def manage_old_backups(directory, max_backups=14):
     try:
+        # List and sort existing backups, deleting old ones to maintain retention policy
         backups = sorted([f for f in os.listdir(directory) if f.startswith('backup_') and f.endswith('.zip')])
         while len(backups) > max_backups:
             old_backup = backups.pop(0)
@@ -139,6 +159,7 @@ def manage_old_backups(directory, max_backups=14):
         logging.error(f"Error deleting old backups: {e}")
 
 def configure(config):
+    # Display configuration menu and allow user to update settings
     print("\nConfiguration Menu")
     print(f"1: NFS Server (current: {config['nfs_server']})")
     print(f"2: NFS Share (current: {config['nfs_share']})")
@@ -164,7 +185,9 @@ def configure(config):
         return
     else:
         print("Invalid selection.")
+    # Save the updated configuration
     save_config(config)
+    # Remount the NFS share with updated configuration
     unmount_nfs_share(config['mount_point'])
     mount_nfs_share(config['nfs_server'], config['nfs_share'], config['mount_point'])
 
