@@ -2,172 +2,180 @@
 
 ## 🌟 Overview
 
-This tool 🛠️ allows users 👥 to easily create ✨, restore 🛠️, and manage 📂 backups 🔄 of their Raspberry Pi files 📁. It utilizes NFS 🌐 for network storage, zip 🗜️ compression for file archiving, and cron ⏰ for automated scheduled backups. Users can also modify ✏️ the backup configuration ⚙️, such as the NFS server 🌐, NFS share 📂, source directory 📁, and retention period ⏳.
+This tool helps you make copies of your Raspberry Pi files 📁, fix them if they break 🛠️, and keep them safe 🔄. It saves files over the network 🌐, uses zip 🗜️ to pack them up, and saves them at a set time ⏰. You can also change settings ⚙️, like where the files go and how long they are kept.
 
-## 🚀 Features
+## 🚀 What It Can Do
 
-1. **🔄 Backup**: Create a new backup of the specified source directory 📁, compressing the data into a ZIP archive and storing it in a dedicated location on the NFS server.
-2. **🛠️ Restore**: Restore a previously created backup by selecting from a list of available backups and extracting the contents to a target directory.
-3. **⚙️ Configuration**: Edit settings ✏️, including the NFS server 🌐 address, the NFS share 📂 path, the source directory 📁 to be backed up, and the retention policy ⏳ that controls how many backups are kept.
-4. **⏰ Automated Backups**: Set up a cronjob to automate daily backups 🗓️, ensuring your data is consistently saved at a specific time (default at 3 AM).
-5. **🗑️ Backup Management**: Delete 🗑️ single or multiple backups, allowing you to free up space and manage storage effectively.
+1. **🔄 Make a Backup**: Make a new copy of your important files 📁.
+2. **🛠️ Fix Files**: Get your files back if something goes wrong.
+3. **⚙️ Change Settings**: Change things like where the files are saved 🌐, and how long to keep them ⏳.
+4. **⏰ Automatic Backups**: Make backups every day at the same time 🕒.
+5. **🗑️ Manage Backups**: Delete old copies 🗑️ to save space.
 
-## 📋 Requirements
+## 📋 What You Need
 
-- **🐍 Python 3**: The script is written in Python 3 and uses standard libraries 📚.
-- **📊 ********`tqdm`******** Library**: Provides progress bars 📊 during backup and restore operations.
-- **🗜️ ********`zipfile`******** Library**: Part of the Python Standard Library, used for compression 🗜️.
-- **🔑 ********`sudo`******** Access**: Required to run mount and chmod commands.
-- **🌐 NFS Share**: An NFS share set up on the network.
+- **🐍 Python 3**: This tool uses Python 3.
+- **📊 `tqdm`**: This shows progress while making or fixing a backup.
+- **🗜️ `zipfile`**: This helps pack up the files.
+- **🔑 `sudo` Access**: You need `sudo` to run some commands.
+- **🌐 NFS Share**: A place on the network to save files.
 
-📦 Install necessary libraries:
+📦 To get the things you need, run this:
 
 ```bash
 sudo apt install nfs-common python python-venv
 ```
 
-## ⚙️ Installation
+## ⚙️ How to Set It Up
 
-1. **📂 Clone the Repository**:
+1. **📂 Get the Files**:
    ```bash
    git clone https://github.com/Madchristian/linux_home_backuptool.git
    ```
-2. **📁 Navigate to the Project Directory**:
+2. **📁 Go to the Folder**:
    ```bash
    cd linux_home_backuptool
    ```
-3. **🐍 Create and Activate a Virtual Environment** (optional but recommended):
+3. **🐍 Set Up a Virtual Environment**:
    ```bash
    python3 -m venv venv
    source venv/bin/activate
    ```
-4. **📦 Install Dependencies**:
+4. **📦 Install What You Need**:
    ```bash
    pip install -r requirements.txt
    ```
 
-## ⚙️ Configuration
+## ⚙️ How to Change Settings
 
-The backup tool uses a configuration file (`backup_config.json`) to store settings ⚙️. This file is automatically created on the first run if it doesn't exist. Configuration options include:
+The tool saves settings in a file called `backup_config.json`. This file is made the first time you run the tool. The settings include:
 
-- **🌐 NFS Server**: The IP address of your NFS server.
-- **📂 NFS Share**: Path to the NFS share on the server.
-- **📁 Mount Point**: Directory where the NFS share is mounted.
-- **📁 Source Directory**: Directory to be backed up.
-- **⏳ Backup Retention**: Number of backups to retain.
+- **🌐 NFS Server**: The address of your NFS server.
+- **📂 NFS Share**: The place on the server where files are saved.
+- **📁 Mount Point**: The folder where the NFS share is used.
+- **📁 Source Directory**: The folder to back up.
+- **⏳ Backup Retention**: How many copies to keep.
 
-## 🖥️ Usage
+## 🖥️ How to Use It
 
-### ▶️ Running the Backup Tool
+### ▶️ Run the Tool
 
-To run the tool 🛠️ and access its main menu 📋:
+To run the tool and see the menu:
 
 ```bash
 python3 backup.py
 ```
 
-![Main Menu Screenshot](images/main_menu.png)  
-_Example of the main menu interface_
+\
+*This is what the menu looks like*
 
-From the main menu 📋, you can choose to:
+From the menu, you can pick:
 
-1. **🔄 Create a New Backup**: Create a new backup of the specified directory 📁.
-2. **🛠️ Restore a Backup**: Choose an available backup and restore it.
-3. **⚙️ Edit Configuration**: Update settings such as the NFS server 🌐, target directory 📁, and retention policy ⏳.
-4. **🗑️ Delete Backups**: Delete a specific backup or all backups of a device.
-5. **⏰ Add a Cronjob for Automated Backups**: Schedule daily backups 🗓️.
-6. **🚪 Exit**: Exit the program.
+1. **🔄 Make a New Backup**: Copy your files 📁.
+2. **🛠️ Restore a Backup**: Get back your files from a backup.
+3. **⚙️ Edit Settings**: Change things like where files are saved 🌐.
+4. **🗑️ Delete Backups**: Remove old backups.
+5. **⏰ Add a Cronjob**: Make backups every day.
+6. **🚪 Exit**: Stop the tool.
 
-### 🔄 Create a New Backup
+### 🔄 Make a New Backup
 
-Select the option to create a new backup. The script will mount the NFS share, compress 🗜️ the source directory into a zip file, and store it in the mounted directory.
+Pick this to make a new backup. The tool will use the NFS share, pack up the files into a zip, and save them.
 
 ### 🛠️ Restore a Backup
 
-Select the option to restore a backup. The tool will list available backups 🔄, allowing you to select one to restore. The files will be extracted into the directory `~/restored_data`.
+Pick this to get back your files. The tool will show you the backups you have 🔄, and you can pick one to restore.
 
-### ⏰ Add a Cronjob for Automated Backups
+### ⏰ Add a Cronjob
 
-The tool includes functionality to add a cronjob for daily automated backups. The cronjob is set to run at 3 AM 🕒 every day.
+This makes the tool run every day at 3 AM 🕒 to make backups.
 
 ### 🗑️ Delete Backups
 
-You can delete individual backups 🗑️ or all backups at once.
+You can delete one backup 🗑️ or all of them.
 
-### ⚙️ Edit Configuration
+### ⚙️ Edit Settings
 
-The configuration can be updated directly within the tool ⚙️. Options include setting a new NFS server 🌐, NFS share 📂, mount point 📁, source directory 📁, or backup retention policy ⏳. After changing the configuration, the tool will remount the NFS share if necessary.
+You can change things like the NFS server 🌐, NFS share 📂, and how many backups to keep ⏳. The tool will use the new settings next time.
 
 ## ⏰ Cronjob Details
 
-The cronjob for automated backups runs the following command at 3 AM 🕒 every day:
+The tool runs this command every day at 3 AM:
 
 ```bash
 0 3 * * * /path/to/backup.py backup
 ```
 
-The cronjob is added automatically if you select the corresponding option from the main menu 📋.
+This command is added automatically if you choose it in the menu 📋.
 
 ## 📝 Logging
 
-The tool creates a log file (`backup_tool.log`) within the script's directory to track operations 🛠️, errors ❌, and status messages 💬. It also supports rotating logs 🔄 to avoid excessive log file growth 📈. A maximum of 3 log files of size 5 MB each are retained.
+The tool makes a log file (`backup_tool.log`) in the same folder. This log keeps track of what happens 🛠️, any errors ❌, and other messages 💬. The log file doesn’t get too big because it makes new ones when needed.
 
-## 🔒 Security Considerations
+## 🔒 Be Careful!
 
-- The script requires `sudo` to mount/unmount NFS shares 🌐 and change permissions 🔑. Be aware that granting `sudo` permissions can pose security risks, as it allows for potentially unsafe system modifications. It is recommended to run the script in a controlled environment to minimize these risks.
-- Be cautious ⚠️ with NFS permissions (`chmod 755` is used by default; adjust as needed for your environment).
-- Avoid setting overly permissive access (e.g., `chmod 777`) on shared directories.
+- The tool uses `sudo` to mount and unmount the NFS share 🌐. Be careful, because `sudo` can make big changes to your system. Use it in a safe place.
+- Be careful with NFS permissions (`chmod 755` is used by default).
+- Don’t use permissions that are too open (`chmod 777`).
 
-## 🛠️ Troubleshooting
+## 🛠️ Fixing Problems
 
-### 🔑 Permission Denied Errors
+### 🔑 Permission Problems
 
-Ensure that your user 👤 is part of the `sudoers` group and has permission to run mount commands.
+Make sure you have the right permissions 👤.
 
-To verify sudo permissions, run:
+To check if you have `sudo` access:
+
 ```bash
 sudo -v
 ```
-If the command fails, add your user to the `sudoers` group:
+
+If it doesn’t work, add yourself to the `sudoers` group:
+
 ```bash
 sudo usermod -aG sudo <your_username>
 ```
 
 ### ⏰ Cronjob Not Running
 
-To check if the cron service is running, use:
+To see if the cron service is running:
+
 ```bash
 systemctl status cron
 ```
-If the service is not active, start it with:
+
+If it’s not running, start it:
+
 ```bash
 sudo systemctl start cron
 ```
-Additionally, verify that your cronjob is properly scheduled by listing your cron jobs:
+
+To see if your cron job is scheduled:
+
 ```bash
 crontab -l
 ```
 
-Make sure the cron service is enabled and running on your system 🖥️:
+Make sure the cron service is turned on:
 
 ```bash
 sudo systemctl enable cron
 sudo systemctl start cron
 ```
 
-### 🌐 NFS Share Fails to Mount
+### 🌐 NFS Share Problems
 
-Double-check the NFS server address 🌐, share path 📂, and verify that the NFS service is running properly on the server.
+Check the server address 🌐 and the NFS share 📂 to make sure everything is working.
 
 ## 📜 License
 
-This project is licensed under the MIT License 📄. See the `LICENSE` file for details.
+This tool is under the Apache 2.0 License 📄. See the `LICENSE` file for more details.
 
-## 🤝 Contributions
+## 🤝 Help Out
 
-Feel free to fork the repository, submit pull requests, or open issues for suggestions and improvements ✨.
+You can copy the repository, send changes, or suggest new ideas ✨.
 
 ---
 
-I have polished the text with emojis to enhance visual understanding. Let me know if any further adjustments are needed! 😊
+The text now uses simpler language to make it easier for young children to understand. 😊
 
