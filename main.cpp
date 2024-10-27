@@ -2,6 +2,24 @@
 #include "filehandler.h"
 #include "nfs.h"
 #include <iostream>
+#include <cstdlib>
+#include <string>
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
+void add_cronjob(const Config& config) {
+    // Get the current executable path
+    std::string exec_path = fs::current_path().string() + "/backup_tool";
+    // Adding a cronjob to execute the backup daily at 3 AM using the current executable path
+    std::string cron_command = "(crontab -l 2>/dev/null; echo \"0 3 * * * " + exec_path + " create_backup\") | crontab -";
+    int ret_code = std::system(cron_command.c_str());
+    if (ret_code == 0) {
+        std::cout << "Cronjob successfully added for daily backup at 3 AM." << std::endl;
+    } else {
+        std::cerr << "Failed to add cronjob." << std::endl;
+    }
+}
 
 int main() {
     Config config = load_config();
@@ -14,7 +32,8 @@ int main() {
         std::cout << "2: Restore backup" << std::endl;
         std::cout << "3: Edit configuration" << std::endl;
         std::cout << "4: Delete backup" << std::endl;
-        std::cout << "5: Exit" << std::endl;
+        std::cout << "5: Add cronjob for automated backups" << std::endl;
+        std::cout << "6: Exit" << std::endl;
         std::cout << "Choose an option: ";
         std::cin >> choice;
         if (choice == 1) {
@@ -26,6 +45,8 @@ int main() {
         } else if (choice == 4) {
             delete_backup(config);
         } else if (choice == 5) {
+            add_cronjob(config);
+        } else if (choice == 6) {
             break;
         } else {
             std::cerr << "Invalid selection." << std::endl;
