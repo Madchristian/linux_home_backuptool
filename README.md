@@ -8,7 +8,8 @@ Dieses Projekt bietet ein einfaches Backup- und Restore-Tool, das entwickelt wur
 - **NFS-Unterstützung**: Daten werden über NFS auf einen zentralen Server gesichert.
 - **Backup-Rotation**: Das Skript behält maximal 14 Backups für jedes Gerät, ältere Backups werden automatisch gelöscht.
 - **Hostname-basierte Backup-Verzeichnisse**: Die Backups werden in einem Verzeichnis abgelegt, das den Hostnamen des jeweiligen Raspberry Pis verwendet, um eine einfache Unterscheidung der Backups von verschiedenen Geräten zu ermöglichen.
-- **Menü zur Benutzerführung**: Ein einfaches Menü führt den Benutzer durch das Erstellen eines neuen Backups oder die Wiederherstellung eines bestehenden Backups.
+- **Konfigurationsdatei**: Eine Konfigurationsdatei (`backup_config.json`) ermöglicht es dem Benutzer, Parameter wie NFS-Server, Zielpfad, Backup-Retention und andere Optionen festzulegen und zu ändern.
+- **Menü zur Benutzerführung**: Ein einfaches, geschachteltes Menü führt den Benutzer durch das Erstellen eines neuen Backups, die Wiederherstellung eines bestehenden Backups, die Verwaltung der Konfiguration und das Löschen von Backups.
 
 ## Voraussetzungen
 
@@ -53,6 +54,22 @@ sudo apt-get install nfs-common
    pip install -r requirements.txt
    ```
 
+## Konfiguration
+
+Das Skript verwendet eine Konfigurationsdatei (`backup_config.json`), um Parameter wie NFS-Server, Zielpfad, Quellverzeichnis und Backup-Retention-Zeit zu verwalten. Diese Datei kann entweder manuell oder durch das Konfigurationsmenü im Skript bearbeitet werden.
+
+Beispiel für eine Konfigurationsdatei:
+
+```json
+{
+  "nfs_server": "10.0.30.20",
+  "nfs_share": "/mnt/MainStorage/backups/rpi",
+  "mount_point": "nfs_backup",
+  "source_directory": "/home/pi",
+  "backup_retention": 14
+}
+```
+
 ## Nutzung
 
 ### Manuelle Ausführung des Skripts
@@ -68,7 +85,9 @@ Das Skript präsentiert dir ein Menü mit folgenden Optionen:
 
 1. **Neues Backup erstellen**: Erstelle ein neues Backup des gewünschten Verzeichnisses.
 2. **Backup wiederherstellen**: Wähle ein vorhandenes Backup aus und stelle es wieder her.
-3. **Beenden**: Beende das Programm.
+3. **Konfiguration bearbeiten**: Ändere Einstellungen wie den NFS-Server, das Zielverzeichnis, die Backup-Retention usw.
+4. **Backup löschen**: Lösche ein spezifisches Backup oder alle Backups eines Geräts.
+5. **Beenden**: Beende das Programm.
 
 ### Automatische Backups mittels Cron-Job
 
@@ -88,13 +107,19 @@ Ersetze `/pfad/zum/linux_home_backuptool` durch den tatsächlichen Pfad, in dem
 ## Funktionen im Detail
 
 ### 1. NFS-Mount
-Das Skript mountet ein NFS-Share vom Server `10.0.30.20` und verwendet `/mnt/MainStorage/backups/rpi` als Backup-Speicherort. Das Verzeichnis wird als `nfs_backup` im aktuellen Programmverzeichnis gemountet. Falls das Mounten fehlschlägt, wird ein Fehler ins Log geschrieben.
+Das Skript mountet ein NFS-Share basierend auf den Einstellungen in der Konfigurationsdatei (`backup_config.json`). Das Verzeichnis wird als `nfs_backup` im aktuellen Programmverzeichnis gemountet. Falls das Mounten fehlschlägt, wird ein Fehler ins Log geschrieben.
 
 ### 2. Backup-Erstellung
-Das Skript erstellt ein ZIP-Archiv des angegebenen Quellverzeichnisses. Das Archiv wird unter einem Verzeichnis mit dem Hostnamen des Geräts und einem Zeitstempel gespeichert, um eine eindeutige Identifikation zu gewährleisten. Außerdem werden automatisch ältere Backups gelöscht, sodass maximal 14 Backups erhalten bleiben.
+Das Skript erstellt ein ZIP-Archiv des angegebenen Quellverzeichnisses. Das Archiv wird unter einem Verzeichnis mit dem Hostnamen des Geräts und einem Zeitstempel gespeichert, um eine eindeutige Identifikation zu gewährleisten. Außerdem werden automatisch ältere Backups gelöscht, sodass maximal die in der Konfiguration festgelegte Anzahl an Backups erhalten bleibt.
 
 ### 3. Wiederherstellung
 Bei der Wiederherstellung kann der Benutzer ein spezifisches Backup anhand des Datums auswählen. Das Backup wird in das Verzeichnis `~/restored_data` entpackt.
+
+### 4. Konfigurationsverwaltung
+Das Menü ermöglicht es dem Benutzer, die Konfiguration des Programms direkt zu ändern, ohne die Konfigurationsdatei manuell bearbeiten zu müssen. Es werden Parameter wie NFS-Server, Backup-Zielverzeichnis, Retentionszeit usw. unterstützt.
+
+### 5. Backup-Löschung
+Der Benutzer kann entweder ein einzelnes Backup auswählen und löschen oder alle Backups eines bestimmten Geräts entfernen.
 
 ## Log-Dateien
 Das Skript erstellt eine Log-Datei (`backup_tool.log`) im Programmverzeichnis, in der alle Aktionen sowie Fehler festgehalten werden. Es werden maximal 3 Log-Dateien mit einer Größe von je 5 MB beibehalten.
