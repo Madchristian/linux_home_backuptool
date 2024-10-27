@@ -1,6 +1,6 @@
 {
     "nfs_server": "10.0.30.20",
-    "nfs_share": "/mnt/MainStorage/backups",
+    "nfs_share": "/mnt/MainStorage/backups/rpi",
     "mount_point": "nfs_backup",
     "source_directory": "/home/christian",
     "backup_retention": 14
