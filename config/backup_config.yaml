@@ -1,0 +1,7 @@
+nfs_server: "10.0.30.20"
+nfs_share: "/mnt/MainStorage/backups/rpi"
+mount_point: "nfs_backup"
+backup_source: "/home/christian"
+backup_destination: "/opt/backuptool/nfs_backup"
+backup_retention: 14
+restore_destination: "/home/restored_data"

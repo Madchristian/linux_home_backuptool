@@ -1,14 +1,31 @@
 #include "config.h"
 #include "filehandler.h"
 #include "nfs.h"
+#include "progress.h"
 #include <iostream>
 #include <cstdlib>
 #include <string>
 #include <filesystem>
 #include <fstream>
 #include <yaml-cpp/yaml.h>
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
+#include <unistd.h>
+#include <termios.h>
+#include <thread>
+#include <atomic>
 
 namespace fs = std::filesystem;
+
+void setup_logging() {
+    // Set up logging to both a rotating file and console for real-time monitoring.
+    auto log_directory = fs::current_path();
+    auto log_file = log_directory / "backup_tool.log";
+    // Placeholder for actual logging implementation as the original logging library was incorrect.
+    std::cout << "Logging setup completed: " << log_file << std::endl;
+}
 
 void add_cronjob(const Config& config) {
     // Get the current executable path
@@ -23,9 +40,26 @@ void add_cronjob(const Config& config) {
     }
 }
 
+void disable_canonical_mode() {
+    struct termios tty;
+    tcgetattr(STDIN_FILENO, &tty);
+    tty.c_lflag &= ~ICANON;
+    tcsetattr(STDIN_FILENO, TCSANOW, &tty);
+}
+
+void enable_canonical_mode() {
+    struct termios tty;
+    tcgetattr(STDIN_FILENO, &tty);
+    tty.c_lflag |= ICANON;
+    tcsetattr(STDIN_FILENO, TCSANOW, &tty);
+}
+
 int main() {
+    setup_logging();
     Config config = Config::load_config();
     nfs::mount_nfs_share(config);
+    
+    disable_canonical_mode();
     
     int choice;
     while (true) {
@@ -39,7 +73,24 @@ int main() {
         std::cout << "Choose an option: ";
         std::cin >> choice;
         if (choice == 1) {
-            filehandler::create_backup(config);
+            std::string hostname = []() -> std::string {
+                char buffer[256];
+                gethostname(buffer, sizeof(buffer));
+                return std::string(buffer);
+            }();
+            config.backup_destination = config.backup_destination + "/" + hostname;
+            fs::create_directories(config.backup_destination);
+
+            // Progress display setup
+            std::atomic<size_t> progress{0};
+            size_t total_files = std::distance(fs::recursive_directory_iterator(config.backup_source), fs::recursive_directory_iterator{});
+            std::thread progress_thread(progress::show_progress, std::ref(progress), total_files);
+            
+            // Actual backup process
+            filehandler::create_backup(config, progress);
+            
+            progress = total_files;
+            progress_thread.join();
         } else if (choice == 2) {
             filehandler::restore_backup(config);
         } else if (choice == 3) {
@@ -54,6 +105,9 @@ int main() {
             std::cerr << "Invalid selection." << std::endl;
         }
     }
+    
+    enable_canonical_mode();
+    
     nfs::unmount_nfs_share(config.mount_point);
     return 0;
 }

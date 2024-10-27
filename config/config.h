@@ -3,16 +3,19 @@
 
 #include <string>
 
-struct Config {
+class Config {
+public:
     std::string nfs_server;
     std::string nfs_share;
     std::string mount_point;
-    std::string source_directory;
+    std::string backup_source;
+    std::string backup_destination;
+    std::string restore_destination;  // Optional, falls nötig
     int backup_retention;
+
+    static Config load_config();
+    void save_config() const;
+    void edit_config();
 };
 
-Config load_config();
-void save_config(const Config& config);
-void edit_config(Config& config);
-
-#endif
+#endif // CONFIG_H
