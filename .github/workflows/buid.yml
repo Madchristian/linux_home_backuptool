@@ -1,0 +1,30 @@
+name: Build and Test C++ Code
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y g++ libzip-dev nfs-common
+
+    - name: Compile C++ code
+      run: |
+        g++ -std=c++17 -o backup_tool backup_tool.cpp -lzip -ltqdm
+
+    - name: Run executable (optional)
+      run: |
+        ./backup_tool
