@@ -1,138 +1,122 @@
 # Linux Home Backup Tool
 
-Dieses Projekt bietet ein einfaches Backup- und Restore-Tool, das entwickelt wurde, um Daten von mehreren Raspberry Pis auf einen zentralen NFS-Server zu sichern. Es verwendet eine Python-basierte Anwendung mit einer benutzerfreundlichen CLI (Command Line Interface).
+This project provides a simple backup and restore tool designed to back up data from multiple Raspberry Pis to a central NFS server. It is built using Python and offers an easy-to-use command-line interface (CLI).
 
-## Funktionen
+## Features
 
-- **Backup als komprimiertes ZIP-Archiv**: Das Skript erstellt ein komprimiertes ZIP-Archiv des angegebenen Quellverzeichnisses.
-- **NFS-Unterstützung**: Daten werden über NFS auf einen zentralen Server gesichert.
-- **Backup-Rotation**: Das Skript behält maximal 14 Backups für jedes Gerät, ältere Backups werden automatisch gelöscht.
-- **Hostname-basierte Backup-Verzeichnisse**: Die Backups werden in einem Verzeichnis abgelegt, das den Hostnamen des jeweiligen Raspberry Pis verwendet, um eine einfache Unterscheidung der Backups von verschiedenen Geräten zu ermöglichen.
-- **Konfigurationsdatei**: Eine Konfigurationsdatei (`backup_config.json`) ermöglicht es dem Benutzer, Parameter wie NFS-Server, Zielpfad, Backup-Retention und andere Optionen festzulegen und zu ändern.
-- **Menü zur Benutzerführung**: Ein einfaches, geschachteltes Menü führt den Benutzer durch das Erstellen eines neuen Backups, die Wiederherstellung eines bestehenden Backups, die Verwaltung der Konfiguration und das Löschen von Backups.
+- **Backup as a compressed ZIP archive**: The script creates a compressed ZIP archive of the specified source directory.
+- **NFS Support**: Data is backed up to a central server over NFS.
+- **Backup Rotation**: The script retains a maximum of 14 backups per device, with older backups being automatically deleted.
+- **Hostname-based Backup Directories**: Backups are stored in a directory that uses the hostname of each Raspberry Pi to easily distinguish backups from different devices.
+- **Configuration File**: A configuration file (`backup_config.json`) allows users to specify parameters such as the NFS server, target path, source directory, and backup retention time. This file can be edited either manually or via the configuration menu.
+- **User Menu for Interaction**: An interactive menu guides the user through creating new backups, restoring from existing backups, managing configuration, and deleting backups.
 
-## Voraussetzungen
+## Requirements
 
-1. **Python 3**: Dieses Skript ist für Python 3 geschrieben und verwendet Python-Standardbibliotheken.
-2. **Virtuelle Umgebung**: Es wird empfohlen, das Skript in einer virtuellen Umgebung zu betreiben.
-3. **NFS-Unterstützung**: Stelle sicher, dass `nfs-common` auf deinem Raspberry Pi installiert ist.
+1. **Python 3**: This script is written in Python 3 and uses Python standard libraries.
+2. **Virtual Environment**: It is recommended to run the script within a virtual environment.
+3. **NFS Support**: Make sure `nfs-common` is installed on your Raspberry Pi.
 
-### Installation von `nfs-common`
+### Install `nfs-common`
 
-Führe folgenden Befehl aus, um die notwendigen Pakete zu installieren:
+To install the required package, run:
 
 ```sh
 sudo apt-get update
 sudo apt-get install nfs-common
 ```
 
-## Einrichtung
+## Setup
 
-1. **Repository klonen**
+1. **Clone the Repository**
 
-   Klone das Git-Repository auf deinem Raspberry Pi:
+   Clone the Git repository to your Raspberry Pi:
 
    ```sh
    git clone https://github.com/Madchristian/linux_home_backuptool.git
    cd linux_home_backuptool
    ```
 
-2. **Virtuelle Umgebung erstellen**
+2. **Create a Virtual Environment**
 
-   Erstelle eine virtuelle Umgebung und aktiviere sie:
+   Create and activate a virtual environment:
 
    ```sh
    python3 -m venv venv
    source venv/bin/activate
    ```
 
-3. **Abhängigkeiten installieren**
+3. **Install Dependencies**
 
-   Installiere die nötigen Pakete aus der `requirements.txt`:
+   Install the required packages from `requirements.txt`:
 
    ```sh
    pip install -r requirements.txt
    ```
 
-## Konfiguration
+## Usage
 
-Das Skript verwendet eine Konfigurationsdatei (`backup_config.json`), um Parameter wie NFS-Server, Zielpfad, Quellverzeichnis und Backup-Retention-Zeit zu verwalten. Diese Datei kann entweder manuell oder durch das Konfigurationsmenü im Skript bearbeitet werden.
+### Manually Run the Script
 
-Beispiel für eine Konfigurationsdatei:
-
-```json
-{
-  "nfs_server": "10.0.30.20",
-  "nfs_share": "/mnt/MainStorage/backups/rpi",
-  "mount_point": "nfs_backup",
-  "source_directory": "/home/pi",
-  "backup_retention": 14
-}
-```
-
-## Nutzung
-
-### Manuelle Ausführung des Skripts
-
-Aktiviere die virtuelle Umgebung und führe das Skript aus:
+Activate the virtual environment and run the script:
 
 ```sh
 source venv/bin/activate
 python3 backup.py
 ```
 
-Das Skript präsentiert dir ein Menü mit folgenden Optionen:
+The script presents you with a menu of the following options:
 
-1. **Neues Backup erstellen**: Erstelle ein neues Backup des gewünschten Verzeichnisses.
-2. **Backup wiederherstellen**: Wähle ein vorhandenes Backup aus und stelle es wieder her.
-3. **Konfiguration bearbeiten**: Ändere Einstellungen wie den NFS-Server, das Zielverzeichnis, die Backup-Retention usw.
-4. **Backup löschen**: Lösche ein spezifisches Backup oder alle Backups eines Geräts.
-5. **Beenden**: Beende das Programm.
+1. **Create New Backup**: Create a new backup of the specified directory.
+2. **Restore Backup**: Choose an available backup and restore it.
+3. **Edit Configuration**: Change settings such as NFS server, target directory, and retention.
+4. **Delete Backup**: Delete a specific backup or all backups of a device.
+5. **Exit**: Exit the program.
 
-### Automatische Backups mittels Cron-Job
+### Automatic Backups via Cron Job
 
-Um täglich automatische Backups zu erstellen, kannst du einen Cron-Job einrichten:
+To automate backups every day, set up a cron job:
 
 ```sh
 crontab -e
 ```
-Füge dann die folgende Zeile hinzu, um das Backup täglich um 3 Uhr morgens durchzuführen:
+
+Add the following line to execute the backup daily at 3 AM:
 
 ```sh
-0 3 * * * cd /pfad/zum/linux_home_backuptool && source venv/bin/activate && /usr/bin/python3 backup.py backup --source /home/pi > /pfad/zum/linux_home_backuptool/cronjob.log 2>&1
+0 3 * * * cd /path/to/linux_home_backuptool && source venv/bin/activate && /usr/bin/python3 backup.py backup --source /home/pi > /path/to/linux_home_backuptool/cronjob.log 2>&1
 ```
 
-Ersetze `/pfad/zum/linux_home_backuptool` durch den tatsächlichen Pfad, in dem du das Repository geklont hast.
+Replace `/path/to/linux_home_backuptool` with the actual path where you cloned the repository.
 
-## Funktionen im Detail
+## Detailed Features
 
-### 1. NFS-Mount
-Das Skript mountet ein NFS-Share basierend auf den Einstellungen in der Konfigurationsdatei (`backup_config.json`). Das Verzeichnis wird als `nfs_backup` im aktuellen Programmverzeichnis gemountet. Falls das Mounten fehlschlägt, wird ein Fehler ins Log geschrieben.
+### 1. NFS Mount
+The script mounts an NFS share based on the settings in the configuration file (`backup_config.json`). The directory is mounted as `nfs_backup` within the current working directory. If the mount fails, an error is logged.
 
-### 2. Backup-Erstellung
-Das Skript erstellt ein ZIP-Archiv des angegebenen Quellverzeichnisses. Das Archiv wird unter einem Verzeichnis mit dem Hostnamen des Geräts und einem Zeitstempel gespeichert, um eine eindeutige Identifikation zu gewährleisten. Außerdem werden automatisch ältere Backups gelöscht, sodass maximal die in der Konfiguration festgelegte Anzahl an Backups erhalten bleibt.
+### 2. Backup Creation
+The script creates a ZIP archive of the specified source directory. The archive is stored in a directory that uses the hostname of the device, along with a timestamp to ensure uniqueness. Older backups are automatically deleted, keeping only the number specified in the configuration.
 
-### 3. Wiederherstellung
-Bei der Wiederherstellung kann der Benutzer ein spezifisches Backup anhand des Datums auswählen. Das Backup wird in das Verzeichnis `~/restored_data` entpackt.
+### 3. Restoration
+During restoration, the user can select a specific backup based on the timestamp. The backup is extracted to the `~/restored_data` directory.
 
-### 4. Konfigurationsverwaltung
-Das Menü ermöglicht es dem Benutzer, die Konfiguration des Programms direkt zu ändern, ohne die Konfigurationsdatei manuell bearbeiten zu müssen. Es werden Parameter wie NFS-Server, Backup-Zielverzeichnis, Retentionszeit usw. unterstützt.
+### 4. Configuration Management
+The menu allows the user to edit the program configuration without manually editing the configuration file. Parameters like NFS server, target directory, retention period, etc., can be adjusted easily.
 
-### 5. Backup-Löschung
-Der Benutzer kann entweder ein einzelnes Backup auswählen und löschen oder alle Backups eines bestimmten Geräts entfernen.
+### 5. Deleting Backups
+Users can delete either a single backup or all backups of a particular device.
 
-## Log-Dateien
-Das Skript erstellt eine Log-Datei (`backup_tool.log`) im Programmverzeichnis, in der alle Aktionen sowie Fehler festgehalten werden. Es werden maximal 3 Log-Dateien mit einer Größe von je 5 MB beibehalten.
+## Log Files
+The script generates a log file (`backup_tool.log`) in the program directory that records all actions and errors. A maximum of 3 log files of size 5 MB each are retained.
 
-## Hinweise
-- **NFS-Zugriff**: Das Skript verwendet `sudo` zum Mounten des NFS-Shares, was bedeutet, dass du entsprechende Berechtigungen benötigst.
-- **Rechteverwaltung**: Stelle sicher, dass der Benutzer `backup_sa` oder der Benutzer, der das Skript ausführt, genügend Rechte hat, um auf das NFS-Share zuzugreifen und dort zu schreiben.
+## Notes
+- **NFS Access**: The script uses `sudo` to mount the NFS share, so appropriate permissions are required.
+- **Permission Management**: Ensure that the user running the script has enough permissions to access and write to the NFS share.
 
-## Verbesserungen
-Falls du Ideen für Verbesserungen hast oder auf Probleme stößt, bist du herzlich eingeladen, Issues im GitHub-Repository zu erstellen oder Pull Requests einzureichen.
+## Improvements
+If you have ideas for improvements or encounter any issues, feel free to create issues on the GitHub repository or submit pull requests.
 
-## Autor
-Erstellt von Madchristian
+## Author
+Created by Madchristian
 
-Viel Spaß beim Sichern deiner Daten! 😊
-
+Enjoy backing up your data! 😊
