@@ -14,7 +14,7 @@
 #include <sys/stat.h>
 #include <sys/mount.h>
 #include <unistd.h>
-#include <tqdm.hpp>
+// #include <tqdm.hpp>  // tqdm not available in C++ as standard, consider removing or replacing this functionality
 
 namespace fs = std::filesystem;
 
@@ -114,9 +114,9 @@ void create_backup(const Config& config) {
     }
 
     size_t total_files = std::distance(fs::recursive_directory_iterator(config.source_directory), fs::recursive_directory_iterator{});
-    tqdm bar;
-    bar.set_label("Backing up");
-    bar.set_max(total_files);
+    std::cout << "Total files to process: " << total_files << std::endl;
+    std::cout << "Progress: " << std::endl;
+    // Implementing simple progress bar for indication
 
     for (const auto& entry : fs::recursive_directory_iterator(config.source_directory)) {
         if (entry.is_regular_file()) {
@@ -127,7 +127,7 @@ void create_backup(const Config& config) {
                 continue;
             }
             zip_file_add(zip, relative_path.c_str(), source, ZIP_FL_ENC_UTF_8);
-            bar.update();
+            std::cout << '.'; std::cout.flush();  // Simple progress indication
         }
     }
     zip_close(zip);
@@ -175,9 +175,7 @@ void restore_backup(const Config& config) {
     }
 
     size_t num_files = zip_get_num_entries(zip, 0);
-    tqdm bar;
-    bar.set_label("Restoring");
-    bar.set_max(num_files);
+    // Progress bar setup removed due to lack of standard C++ tqdm support
 
     for (size_t i = 0; i < num_files; ++i) {
         const char* name = zip_get_name(zip, i, 0);
@@ -195,7 +193,7 @@ void restore_backup(const Config& config) {
             out.write(buffer, bytes_read);
         }
         zip_fclose(file);
-        bar.update();
+        // bar.update(); - Progress bar update removed
     }
     zip_close(zip);
     std::cout << "Successfully restored from: " << restore_file << " to " << restore_target << std::endl;
