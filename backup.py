@@ -76,7 +76,7 @@ def backup(config):
         with zipfile.ZipFile(backup_file, 'w', zipfile.ZIP_DEFLATED) as backup_zip:
             files = list(os.walk(source_directory))
             total_files = sum(len(files_in_dir[2]) for files_in_dir in files)
-            with tqdm(total=total_files, desc="Backing up", unit="file") as pbar:
+            with tqdm(total=total_files, desc="Backing up", unit="file", leave=True, dynamic_ncols=True) as pbar:
                 for root, dirs, files in os.walk(source_directory):
                     for file in files:
                         file_path = os.path.join(root, file)
@@ -115,7 +115,7 @@ def restore(config):
                 
                 with zipfile.ZipFile(restore_file, 'r') as backup_zip:
                     files = backup_zip.namelist()
-                    with tqdm(total=len(files), desc="Restoring", unit="file") as pbar:
+                    with tqdm(total=len(files), desc="Restoring", unit="file", leave=True, dynamic_ncols=True) as pbar:
                         for file in files:
                             backup_zip.extract(file, restore_target)
                             pbar.update(1)
