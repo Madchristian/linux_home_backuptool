@@ -10,6 +10,8 @@ datetime==5.5
     # via -r requirements.in
 pytz==2024.2
     # via datetime
+tqdm==4.66.5
+    # via -r requirements.in
 zope-interface==7.1.1
     # via datetime
 
