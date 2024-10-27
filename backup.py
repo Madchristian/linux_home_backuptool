@@ -53,7 +53,7 @@ def mount_nfs_share(nfs_server, nfs_share, mount_point):
         if not os.path.ismount(mount_point):
             os.makedirs(mount_point, exist_ok=True)
             subprocess.run(["sudo", "mount", "-o", "rw,nfsvers=4", f"{nfs_server}:{nfs_share}", mount_point], check=True)
-            subprocess.run(["sudo", "chmod", "777", mount_point], check=True)
+            subprocess.run(["sudo", "chmod", "755", mount_point], check=True)
             logging.info(f"NFS share {nfs_server}:{nfs_share} successfully mounted at {mount_point}")
     except subprocess.CalledProcessError as e:
         logging.error(f"Error mounting NFS share: {e}")
@@ -191,6 +191,21 @@ def configure(config):
     unmount_nfs_share(config['mount_point'])
     mount_nfs_share(config['nfs_server'], config['nfs_share'], config['mount_point'])
 
+def add_cronjob():
+    # Automate adding the backup script to the crontab
+    try:
+        cron_command = f"0 3 * * * {os.path.abspath(__file__)} backup"
+        result = subprocess.run(['crontab', '-l'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        current_crontab = result.stdout
+        if cron_command not in current_crontab:
+            new_crontab = current_crontab + f"\n{cron_command}\n"
+            subprocess.run(['crontab'], input=new_crontab, text=True, check=True)
+            logging.info("Cronjob added for daily backup at 03:00 AM.")
+        else:
+            logging.info("Cronjob already exists.")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Error adding cronjob: {e}")
+
 def display_menu(config):
     mount_nfs_share(config['nfs_server'], config['nfs_share'], config['mount_point'])
     while True:
@@ -199,8 +214,9 @@ def display_menu(config):
         print("2: Restore backup")
         print("3: Edit configuration")
         print("4: Delete backup")
-        print("5: Exit")
-        choice = input("Please choose an option (1-5): ")
+        print("5: Add cronjob for automated backups")
+        print("6: Exit")
+        choice = input("Please choose an option (1-6): ")
         if choice == '1':
             backup(config)
         elif choice == '2':
@@ -210,11 +226,13 @@ def display_menu(config):
         elif choice == '4':
             delete_backup(config)
         elif choice == '5':
+            add_cronjob()
+        elif choice == '6':
             unmount_nfs_share(config['mount_point'])
             print("Program exited.")
             break
         else:
-            print("Invalid selection. Please choose an option between 1 and 5.")
+            print("Invalid selection. Please choose an option between 1 and 6.")
 
 def delete_backup(config):
     try:
