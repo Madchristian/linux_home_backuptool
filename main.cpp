@@ -87,16 +87,40 @@ int main() {
             std::thread progress_thread(progress::show_progress, std::ref(progress), total_files);
             
             // Actual backup process
-            filehandler::create_backup(config, progress);
+            filehandler::create_backup(config);
             
             progress = total_files;
             progress_thread.join();
         } else if (choice == 2) {
-            filehandler::restore_backup(config);
+            std::cout << "Available backups in " << config.backup_destination << ":\n";
+            bool backups_found = false;
+            for (const auto& entry : fs::directory_iterator(config.backup_destination)) {
+                if (entry.is_regular_file()) {
+                    std::cout << entry.path().filename().string() << std::endl;
+                    backups_found = true;
+                }
+            }
+            if (!backups_found) {
+                std::cout << "No backups found." << std::endl;
+            } else {
+                filehandler::restore_backup(config);
+            }
         } else if (choice == 3) {
             config.edit_config();
         } else if (choice == 4) {
-            filehandler::delete_backup(config);
+            std::cout << "Available backups in " << config.backup_destination << ":\n";
+            bool backups_found = false;
+            for (const auto& entry : fs::directory_iterator(config.backup_destination)) {
+                if (entry.is_regular_file()) {
+                    std::cout << entry.path().filename().string() << std::endl;
+                    backups_found = true;
+                }
+            }
+            if (!backups_found) {
+                std::cout << "No backups found." << std::endl;
+            } else {
+                filehandler::delete_backup(config);
+            }
         } else if (choice == 5) {
             add_cronjob(config);
         } else if (choice == 6) {
