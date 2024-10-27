@@ -148,16 +148,16 @@ def configure(config):
     print("6: Back to main menu")
     choice = input("Please choose an option (1-6): ")
     if choice == '1':
-        config['nfs_server'] = input("New NFS Server: ")
+        config['nfs_server'] = input(f"New NFS Server (current: {config['nfs_server']}): ") or config['nfs_server']
     elif choice == '2':
-        config['nfs_share'] = input("New NFS Share: ")
+        config['nfs_share'] = input(f"New NFS Share (current: {config['nfs_share']}): ") or config['nfs_share']
     elif choice == '3':
-        config['mount_point'] = input("New Mount Point: ")
+        config['mount_point'] = input(f"New Mount Point (current: {config['mount_point']}): ") or config['mount_point']
     elif choice == '4':
-        config['source_directory'] = input("New Source Directory: ")
+        config['source_directory'] = input(f"New Source Directory (current: {config['source_directory']}): ") or config['source_directory']
     elif choice == '5':
         try:
-            config['backup_retention'] = int(input("New Backup Retention (number of days): "))
+            config['backup_retention'] = int(input(f"New Backup Retention (number of days, current: {config['backup_retention']}): ") or config['backup_retention'])
         except ValueError:
             print("Invalid input. Please enter a number.")
     elif choice == '6':
