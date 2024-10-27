@@ -8,6 +8,7 @@ from logging.handlers import RotatingFileHandler
 import socket
 import zipfile
 import json
+from tqdm import tqdm
 
 def setup_logging():
     log_directory = os.path.dirname(os.path.abspath(__file__))
@@ -73,10 +74,14 @@ def backup(config):
         backup_file = os.path.join(host_backup_directory, f'backup_{date_time}.zip')
         
         with zipfile.ZipFile(backup_file, 'w', zipfile.ZIP_DEFLATED) as backup_zip:
-            for root, dirs, files in os.walk(source_directory):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    backup_zip.write(file_path, os.path.relpath(file_path, source_directory))
+            files = list(os.walk(source_directory))
+            total_files = sum(len(files_in_dir[2]) for files_in_dir in files)
+            with tqdm(total=total_files, desc="Backing up", unit="file") as pbar:
+                for root, dirs, files in os.walk(source_directory):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        backup_zip.write(file_path, os.path.relpath(file_path, source_directory))
+                        pbar.update(1)
         
         logging.info(f"Backup successfully created: {backup_file}")
         manage_old_backups(host_backup_directory, config['backup_retention'])
@@ -109,7 +114,11 @@ def restore(config):
                     os.makedirs(restore_target)
                 
                 with zipfile.ZipFile(restore_file, 'r') as backup_zip:
-                    backup_zip.extractall(restore_target)
+                    files = backup_zip.namelist()
+                    with tqdm(total=len(files), desc="Restoring", unit="file") as pbar:
+                        for file in files:
+                            backup_zip.extract(file, restore_target)
+                            pbar.update(1)
                 
                 logging.info(f"Successfully restored from: {restore_file} to {restore_target}")
             else:
